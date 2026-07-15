@@ -71,7 +71,7 @@ class Competition(BaseModel):
     title: str
     """The title of the competition."""
 
-    metric: enums.Metric
+    metric: enums.MetricValue
     """The metric being measured."""
 
     type: CompetitionType

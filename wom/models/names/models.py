@@ -47,7 +47,7 @@ class NameChangeReviewContext(BaseModel):
     # public on the name change endpoints and if we do
     # determine how to handle it in a cleaner way.
 
-    negative_gains: t.Optional[t.Dict[enums.Metric, int]] = None
+    negative_gains: t.Optional[t.Dict[enums.MetricValue, int]] = None
     """The negative gains that were observed, if there were any. Only populated
     when the reason is `NegativeGains`.
     """

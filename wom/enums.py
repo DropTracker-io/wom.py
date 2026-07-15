@@ -35,6 +35,7 @@ __all__ = (
     "Bosses",
     "ComputedMetrics",
     "Metric",
+    "MetricValue",
     "Period",
     "Skills",
 )
@@ -78,6 +79,22 @@ class Period(BaseEnum):
     Year = "year"
 
 
+MetricValue = str
+"""A metric slug as it appears on the wire (e.g. ``"zulrah"``, ``"attack"``).
+
+DropTracker fork note: response-model fields that hold a metric are typed as
+``MetricValue`` (== ``str``) rather than [`Metric`][wom.Metric] on purpose.
+WOM adds new metrics (bosses/skills) to the live API faster than this pinned
+client's enum is updated, and msgspec's strict enum decoding fails the ENTIRE
+response on any value not in ``Metric`` — a single unknown boss in a player
+snapshot broke the whole ``get_details`` call. Decoding as ``str`` makes the
+client tolerant: unknown metrics pass through as their slug string instead of
+raising. ``Metric`` stays a str-valued enum, so lookups by the enum constant
+still work (``snapshot.bosses[Metric.Zulrah]`` — str hash/eq), and
+``Metric(value)`` remains available for values the enum knows.
+"""
+
+
 class Metric(BaseEnum):
     """Represents all metrics including skills, bosses, activities, and
     computed metrics.
@@ -103,6 +120,7 @@ class Metric(BaseEnum):
     Herblore = "herblore"
     Agility = "agility"
     Thieving = "thieving"
+    Sailing = "sailing"
     Slayer = "slayer"
     Farming = "farming"
     Runecrafting = "runecrafting"
@@ -125,13 +143,16 @@ class Metric(BaseEnum):
     PvpArena = "pvp_arena"
     SoulWarsZeal = "soul_wars_zeal"
     GuardiansOfTheRift = "guardians_of_the_rift"
-
+    CollectionsLogged = "collections_logged"
+    
     # Bosses
     AbyssalSire = "abyssal_sire"
     AlchemicalHydra = "alchemical_hydra"
+    Amoxliatl = "amoxliatl"
     Araxxor = "araxxor"
     Artio = "artio"
     BarrowsChests = "barrows_chests"
+    Brutus = "brutus"
     Bryophyta = "bryophyta"
     Callisto = "callisto"
     Calvarion = "calvarion"
@@ -147,11 +168,13 @@ class Metric(BaseEnum):
     DagannothRex = "dagannoth_rex"
     DagannothSupreme = "dagannoth_supreme"
     DerangedArchaeologist = "deranged_archaeologist"
+    DoomOfMokhaiotl = "doom_of_mokhaiotl"
     DukeSucellus = "duke_sucellus"
     GeneralGraardor = "general_graardor"
     GiantMole = "giant_mole"
     GrotesqueGuardians = "grotesque_guardians"
     Hespori = "hespori"
+    Hueycoatl = "the_hueycoatl"
     KalphiteQueen = "kalphite_queen"
     KingBlackDragon = "king_black_dragon"
     Kraken = "kraken"
@@ -162,6 +185,7 @@ class Metric(BaseEnum):
     Nex = "nex"
     Nightmare = "nightmare"
     PhosanisNightmare = "phosanis_nightmare"
+    MaggotKing = "maggot_king"
     Obor = "obor"
     PhantomMuspah = "phantom_muspah"
     Sarachnis = "sarachnis"
@@ -169,12 +193,14 @@ class Metric(BaseEnum):
     Scurrius = "scurrius"
     Skotizo = "skotizo"
     SolHeredit = "sol_heredit"
+    ShellbaneGryphon = "shellbane_gryphon"
     Spindel = "spindel"
     Tempoross = "tempoross"
     TheGauntlet = "the_gauntlet"
     TheCorruptedGauntlet = "the_corrupted_gauntlet"
     TheLeviathan = "the_leviathan"
     TheWhisperer = "the_whisperer"
+    TheRoyalTitans = "the_royal_titans"
     TheatreOfBlood = "theatre_of_blood"
     TheatreOfBloodHard = "theatre_of_blood_hard_mode"
     ThermonuclearSmokeDevil = "thermonuclear_smoke_devil"
@@ -189,7 +215,7 @@ class Metric(BaseEnum):
     Wintertodt = "wintertodt"
     Zalcano = "zalcano"
     Zulrah = "zulrah"
-
+    Yama = "yama"
     # Computed Metrics
     Ehp = "ehp"
     Ehb = "ehb"
@@ -219,6 +245,7 @@ Skills: t.FrozenSet[Metric] = frozenset(
         Metric.Herblore,
         Metric.Agility,
         Metric.Thieving,
+        Metric.Sailing,
         Metric.Slayer,
         Metric.Farming,
         Metric.Runecrafting,
@@ -245,6 +272,7 @@ Activities: t.FrozenSet[Metric] = frozenset(
         Metric.PvpArena,
         Metric.SoulWarsZeal,
         Metric.GuardiansOfTheRift,
+        Metric.CollectionsLogged
     }
 )
 """Set containing activities."""
@@ -253,9 +281,11 @@ Bosses: t.FrozenSet[Metric] = frozenset(
     {
         Metric.AbyssalSire,
         Metric.AlchemicalHydra,
+        Metric.Amoxliatl,
         Metric.Araxxor,
         Metric.Artio,
         Metric.BarrowsChests,
+        Metric.Brutus,
         Metric.Bryophyta,
         Metric.Callisto,
         Metric.Calvarion,
@@ -271,17 +301,20 @@ Bosses: t.FrozenSet[Metric] = frozenset(
         Metric.DagannothRex,
         Metric.DagannothSupreme,
         Metric.DerangedArchaeologist,
+        Metric.DoomOfMokhaiotl,
         Metric.DukeSucellus,
         Metric.GeneralGraardor,
         Metric.GiantMole,
         Metric.GrotesqueGuardians,
         Metric.Hespori,
+        Metric.Hueycoatl,
         Metric.KalphiteQueen,
         Metric.KingBlackDragon,
         Metric.Kraken,
         Metric.Kreearra,
         Metric.KrilTsutsaroth,
         Metric.LunarChests,
+        Metric.MaggotKing,
         Metric.Mimic,
         Metric.Nex,
         Metric.Nightmare,
@@ -292,6 +325,7 @@ Bosses: t.FrozenSet[Metric] = frozenset(
         Metric.Scorpia,
         Metric.Scurrius,
         Metric.Skotizo,
+        Metric.ShellbaneGryphon,
         Metric.SolHeredit,
         Metric.Spindel,
         Metric.Tempoross,
@@ -299,6 +333,7 @@ Bosses: t.FrozenSet[Metric] = frozenset(
         Metric.TheCorruptedGauntlet,
         Metric.TheLeviathan,
         Metric.TheWhisperer,
+        Metric.TheRoyalTitans,
         Metric.TheatreOfBlood,
         Metric.TheatreOfBloodHard,
         Metric.ThermonuclearSmokeDevil,
@@ -313,6 +348,7 @@ Bosses: t.FrozenSet[Metric] = frozenset(
         Metric.Wintertodt,
         Metric.Zalcano,
         Metric.Zulrah,
+        Metric.Yama
     }
 )
 """Set containing bosses."""

@@ -259,7 +259,7 @@ class GroupHiscoresComputedMetricItem(BaseModel, tag="computed"):
 class MetricLeader(BaseModel):
     """Base class used to derive leaders in different metrics."""
 
-    metric: enums.Metric
+    metric: enums.MetricValue
     """The metric being measured."""
 
     rank: int
@@ -303,18 +303,18 @@ class ComputedMetricLeader(MetricLeader):
 class MetricLeaders(BaseModel):
     """The leaders for each metric in a group."""
 
-    skills: t.Dict[enums.Metric, SkillLeader]
+    skills: t.Dict[enums.MetricValue, SkillLeader]
     """A mapping of skill keys to [`SkillLeader`][wom.SkillLeader] values."""
 
-    bosses: t.Dict[enums.Metric, BossLeader]
+    bosses: t.Dict[enums.MetricValue, BossLeader]
     """A mapping of boss keys to [`BossLeader`][wom.BossLeader] values."""
 
-    activities: t.Dict[enums.Metric, ActivityLeader]
+    activities: t.Dict[enums.MetricValue, ActivityLeader]
     """A mapping of activity keys to [`ActivityLeader`]
     [wom.ActivityLeader] values.
     """
 
-    computed: t.Dict[enums.Metric, ComputedMetricLeader]
+    computed: t.Dict[enums.MetricValue, ComputedMetricLeader]
     """A mapping of computed metric keys to
     [`ComputedMetricLeader`][wom.ComputedMetricLeader] values.
     """

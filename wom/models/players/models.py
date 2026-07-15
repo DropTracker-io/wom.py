@@ -62,7 +62,7 @@ __all__ = (
 class Skill(BaseModel):
     """Details regarding a particular skill."""
 
-    metric: enums.Metric
+    metric: enums.MetricValue
     """The skill being measured."""
 
     rank: int
@@ -81,7 +81,7 @@ class Skill(BaseModel):
 class Boss(BaseModel):
     """Details regarding a particular boss."""
 
-    metric: enums.Metric
+    metric: enums.MetricValue
     """The boss being measured."""
 
     rank: int
@@ -97,7 +97,7 @@ class Boss(BaseModel):
 class Activity(BaseModel):
     """Details regarding a particular activity."""
 
-    metric: enums.Metric
+    metric: enums.MetricValue
     """The activity being measured."""
 
     rank: int
@@ -110,7 +110,7 @@ class Activity(BaseModel):
 class ComputedMetric(BaseModel):
     """Details regarding a computed metric."""
 
-    metric: enums.Metric
+    metric: enums.MetricValue
     """The computed metric being measured."""
 
     rank: int
@@ -123,16 +123,16 @@ class ComputedMetric(BaseModel):
 class SnapshotData(BaseModel):
     """The data associated with this snapshot."""
 
-    skills: t.Dict[enums.Metric, Skill]
+    skills: t.Dict[enums.MetricValue, Skill]
     """A mapping of skill keys to skill values from this snapshot."""
 
-    bosses: t.Dict[enums.Metric, Boss]
+    bosses: t.Dict[enums.MetricValue, Boss]
     """A mapping of boss keys to boss values from this snapshot."""
 
-    activities: t.Dict[enums.Metric, Activity]
+    activities: t.Dict[enums.MetricValue, Activity]
     """A mapping of activity keys to activity values from this snapshot."""
 
-    computed: t.Dict[enums.Metric, ComputedMetric]
+    computed: t.Dict[enums.MetricValue, ComputedMetric]
     """A mapping of computed metric keys to computed metric values from
     this snapshot.
     """
@@ -243,7 +243,7 @@ class Achievement(BaseModel):
     name: str
     """The name of the achievement."""
 
-    metric: enums.Metric
+    metric: enums.MetricValue
     """The [`Metric`][wom.Metric] for this achievement."""
 
     measure: AchievementMeasure
@@ -277,7 +277,7 @@ class AchievementProgress(BaseModel):
     name: str
     """The name of the achievement."""
 
-    metric: enums.Metric
+    metric: enums.MetricValue
     """The [`Metric`][wom.Metric] for this achievement."""
 
     measure: AchievementMeasure
@@ -340,7 +340,7 @@ class Gains(BaseModel):
 class SkillGains(BaseModel):
     """Represents skill gains made by a player."""
 
-    metric: enums.Metric
+    metric: enums.MetricValue
     """The skill being measured."""
 
     experience: Gains
@@ -359,7 +359,7 @@ class SkillGains(BaseModel):
 class BossGains(BaseModel):
     """Represents boss gains made by a player."""
 
-    metric: enums.Metric
+    metric: enums.MetricValue
     """The boss being measured."""
 
     ehb: Gains
@@ -375,7 +375,7 @@ class BossGains(BaseModel):
 class ActivityGains(BaseModel):
     """Represents activity gains made by a player."""
 
-    metric: enums.Metric
+    metric: enums.MetricValue
     """The activity being measured."""
 
     rank: Gains
@@ -388,7 +388,7 @@ class ActivityGains(BaseModel):
 class ComputedGains(BaseModel):
     """Represents computed gains made by a player."""
 
-    metric: enums.Metric
+    metric: enums.MetricValue
     """The computed metric being measured."""
 
     rank: Gains
@@ -401,18 +401,18 @@ class ComputedGains(BaseModel):
 class PlayerGainsData(BaseModel):
     """Contains all the player gains data."""
 
-    skills: t.Dict[enums.Metric, SkillGains]
+    skills: t.Dict[enums.MetricValue, SkillGains]
     """A mapping of skill keys to [`SkillGains`] [wom.SkillGains] values."""
 
-    bosses: t.Dict[enums.Metric, BossGains]
+    bosses: t.Dict[enums.MetricValue, BossGains]
     """A mapping of boss keys to [`BossGains`][wom.BossGains] values."""
 
-    activities: t.Dict[enums.Metric, ActivityGains]
+    activities: t.Dict[enums.MetricValue, ActivityGains]
     """A mapping of activity keys to [`ActivityGains`][wom.ActivityGains]
     values.
     """
 
-    computed: t.Dict[enums.Metric, ComputedGains]
+    computed: t.Dict[enums.MetricValue, ComputedGains]
     """A mapping of computed metric keys to [`ComputedGains`]
     [wom.ComputedGains] values.
     """

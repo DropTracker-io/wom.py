@@ -32,7 +32,10 @@ from __future__ import annotations
 from typing import Final
 
 __packagename__: Final[str] = "wom.py"
-__version__: Final[str] = "1.0.0"
+# DropTracker fork of upstream 1.0.0: metric-tolerant decoding (unknown WOM
+# metrics no longer crash the response decode) + enum kept current with the
+# live API. See DROPTRACKER_FORK.md. The base wire/version stays 1.0.0.
+__version__: Final[str] = "1.0.0+dt.1"
 __author__: Final[str] = "Jonxslays"
 __copyright__: Final[str] = "2023-present Jonxslays"
 __description__: Final[str] = "An asynchronous wrapper for the Wise Old Man API."

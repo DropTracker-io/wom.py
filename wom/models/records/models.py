@@ -43,7 +43,7 @@ class Record(BaseModel):
     period: enums.Period
     """The [`Period`][wom.Period] over which this record was achieved."""
 
-    metric: enums.Metric
+    metric: enums.MetricValue
     """The [`Metric`][wom.Metric] measured in this record."""
 
     value: float
