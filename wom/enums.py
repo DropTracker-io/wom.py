@@ -272,7 +272,7 @@ Activities: t.FrozenSet[Metric] = frozenset(
         Metric.PvpArena,
         Metric.SoulWarsZeal,
         Metric.GuardiansOfTheRift,
-        Metric.CollectionsLogged
+        Metric.CollectionsLogged,
     }
 )
 """Set containing activities."""
@@ -348,7 +348,7 @@ Bosses: t.FrozenSet[Metric] = frozenset(
         Metric.Wintertodt,
         Metric.Zalcano,
         Metric.Zulrah,
-        Metric.Yama
+        Metric.Yama,
     }
 )
 """Set containing bosses."""

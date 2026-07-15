@@ -53,11 +53,28 @@ strings and DropTracker's `utils/wiseoldman.py` family-mapping (skill-vs-boss)
 doesn't recognize them until added. When you add a metric here, also mirror the
 boss/skill slug into the `_WOM_*_SLUGS` block in the app's `utils/wiseoldman.py`.
 
+## Keeping the enum current — automated
+
+`tools/sync_metrics.py` diffs `wom/enums.py` against the authoritative
+`@wise-old-man/utils` metric catalogue (the package WOM's own API is built on)
+and appends any missing skills/bosses/activities (additive only — never renames
+or removes). Deterministic; no AI needed.
+
+`.github/workflows/sync-metrics.yml` runs it weekly (and on demand via
+"Run workflow"): if WOM added metrics it updates the enum, runs the tests, and
+commits to `droptracker` — **hands-off**. A human is pinged only when the job
+**fails** (source unreachable, format changed, or tests broke) — GitHub emails
+on a failed scheduled run. So the enum tracks the live API on its own, and the
+only manual signal is an explicit failure.
+
+Run it locally anytime: `python tools/sync_metrics.py --check` (report only) or
+without `--check` to write.
+
 ## Maintenance
 
-- **A new boss/skill appears and things keep working?** Nothing is on fire —
-  decoding is tolerant. Add the enum member here (and the app slug) when you want
-  WOM-hybrid event tracking to recognize it; the app logs a warning naming what's
-  unmapped. Then bump the `requirements.txt` pin.
+- **A new boss/skill appears?** Usually nothing to do — the weekly sync adds it,
+  and decoding tolerates it in the meantime regardless. Downstream, bump the
+  consumer's pin to the new commit when convenient (or pin the `droptracker`
+  branch to always float).
 - **Rebuilding a prod venv:** just `pip install -r requirements.txt` — it pulls
   this fork. No manual `site-packages` patching, ever again.
