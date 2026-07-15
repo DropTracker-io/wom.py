@@ -28,7 +28,7 @@ from wom import enums
 
 from ..base import BaseModel
 from .enums import AchievementMeasure
-from .enums import Country
+from .enums import CountryValue
 from .enums import PlayerBuild
 from .enums import PlayerStatus
 from .enums import PlayerType
@@ -175,9 +175,11 @@ class Player(BaseModel):
     build: PlayerBuild
     """The [`PlayerBuild`][wom.PlayerBuild] for this player."""
 
-    country: t.Optional[Country]
-    """The players [`Country`][wom.Country] country of origin, if they
-    have one set.
+    country: t.Optional[CountryValue]
+    """The player's country of origin as a raw code, if set (e.g. ``"GB"``
+    or ``"GB_ENG"``). Typed ``str`` (``CountryValue``) rather than
+    [`Country`][wom.Country] so unknown or subdivision codes don't fail
+    decoding — see ``CountryValue``.
     """
 
     status: PlayerStatus

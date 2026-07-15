@@ -26,10 +26,27 @@ from wom.enums import BaseEnum
 __all__ = (
     "AchievementMeasure",
     "Country",
+    "CountryValue",
     "PlayerBuild",
     "PlayerStatus",
     "PlayerType",
 )
+
+
+CountryValue = str
+"""A player's country code as sent by WOM (e.g. ``"GB"``, ``"GB_ENG"``).
+
+DropTracker fork note: the player ``country`` field is typed ``CountryValue``
+(== ``str``) rather than [`Country`][wom.Country] on purpose — the same
+tolerance the fork gives metrics (see ``MetricValue`` in ``wom.enums``). WOM
+emits subdivision codes (``GB_ENG`` for England) and adds new countries this
+pinned client's ``Country`` enum lacks; msgspec's strict enum decoding fails
+the ENTIRE response on any unknown value, so one player with ``GB_ENG`` broke
+the whole group member sync (``get_group_details`` decodes each membership's
+player). Decoding as ``str`` passes the code through instead of raising.
+``Country`` stays a str-valued enum, so ``Country(value)`` still resolves
+known codes.
+"""
 
 
 class PlayerType(BaseEnum):
