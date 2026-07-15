@@ -1,18 +1,50 @@
 # DropTracker fork of wom.py
 
 Fork of [`Jonxslays/wom.py`](https://github.com/Jonxslays/wom.py) branched from
-the **1.0.0** release (`3b7cd0e`). DropTracker pins this instead of PyPI `wom.py`
-so the whole team, CI, and prod run identical, versioned code — no more
-hand-patching `site-packages`.
+the **1.0.0** release (`3b7cd0e`), kept metric-current with the live WOM API and
+hardened so new game content can't break decoding. Credit for wom.py itself goes
+to [@Jonxslays](https://github.com/Jonxslays); this fork is MIT, same as upstream.
 
-Branch: `droptracker`. Pin it in `requirements.txt`:
+Branch: `droptracker` (the repo default). Install it directly:
 
 ```
-wom.py @ git+https://github.com/DropTracker-io/wom.py@<commit-sha>
+pip install "wom.py @ git+https://github.com/DropTracker-io/wom.py@droptracker"
 ```
 
+Pin a specific commit instead of `@droptracker` for a reproducible build.
 Upstream is unmaintained at the 1.0.0 line (current release is 3.x, a breaking
 change we haven't migrated to).
+
+## What this guarantees (and what it doesn't)
+
+**Guaranteed — you never hand-track WOM releases for this:**
+
+- **New metrics never crash.** A new boss/skill/activity WOM adds decodes as its
+  slug string instead of failing the response. True immediately, no update
+  needed, regardless of how stale the enum is.
+- **New response fields never crash.** msgspec ignores fields it doesn't know,
+  so a field WOM adds to a payload is a no-op here.
+- **The enum keeps itself current.** The weekly sync (below) adds new metrics
+  from WOM's own catalogue automatically, so `Metric.NewBoss` and family
+  membership (`Metric.NewBoss in wom.Bosses`) start working on their own, hands-off.
+
+**Not guaranteed (the honest caveats):**
+
+- **A true WOM *breaking* change** — removing or renaming an existing response
+  field — will still raise, exactly like it would for any wom.py version. That's
+  rare, and no client is immune; it needs a real fix when it happens.
+- **The auto-sync itself can fail** — if WOM restructures `@wise-old-man/utils`,
+  the package can't be reached, or the tests break. When it does, the job fails
+  and GitHub emails the repo watchers. That's the *only* routine reason a human
+  is ever needed, and it's an explicit signal, not a silent gap.
+- **Recognition lag, not breakage.** Between a WOM release and the next weekly
+  sync, a brand-new metric decodes fine but isn't in the enum yet, so
+  enum-membership checks don't classify it. Run the sync on demand
+  (Actions → "Run workflow", or `python tools/sync_metrics.py`) if you can't wait.
+
+So: **new OSRS content will not break this client, and the enum tracks WOM on its
+own — the worst routine case is an email telling you the automation needs a
+look.**
 
 ## What diverges from upstream 1.0.0
 

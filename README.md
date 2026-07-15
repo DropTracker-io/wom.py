@@ -13,6 +13,39 @@ The library aims to make it easy to interact with the Wise Old Man API by
 providing service methods matching all available endpoints and model classes
 for data consistency.
 
+---
+
+> ### ℹ️ This is the DropTracker fork of wom.py
+>
+> A maintained fork of upstream [`wom.py`](https://github.com/Jonxslays/wom.py)
+> **1.0.0** with one goal: **new Old School RuneScape content never breaks the
+> client.** All credit for wom.py goes to
+> [@Jonxslays](https://github.com/Jonxslays); this fork stays MIT-licensed.
+>
+> - **Metric-tolerant decoding.** Upstream decodes metric fields as a strict
+>   enum, so a metric WOM added that the pinned client didn't know (a new
+>   boss/skill) failed the *entire* response — one unknown boss in a snapshot
+>   broke `get_details`. Here, metric-bearing response fields decode as `str`,
+>   so unknown metrics — and any new fields WOM adds — pass through instead of
+>   raising. `Metric` is still a str-valued enum, so
+>   `snapshot.bosses[Metric.Zulrah]` and `metric=Metric.X` params work exactly
+>   as before.
+> - **Self-updating enum.** A weekly GitHub Action diffs the enum against WOM's
+>   authoritative [`@wise-old-man/utils`](https://www.npmjs.com/package/@wise-old-man/utils)
+>   catalogue and commits any new metrics automatically — a human is pinged
+>   only if that job fails.
+>
+> So you don't track WOM's releases by hand, and new game content can't take
+> the client down. Guarantees + caveats: **[DROPTRACKER_FORK.md](DROPTRACKER_FORK.md)**.
+>
+> **Install (floats with our updates):**
+> ```
+> pip install "wom.py @ git+https://github.com/DropTracker-io/wom.py@droptracker"
+> ```
+> Pin a specific commit instead of `@droptracker` for a reproducible build.
+
+---
+
 ## Documentation
 
 - [Stable](https://jonxslays.github.io/wom.py/)
