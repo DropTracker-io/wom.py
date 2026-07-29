@@ -146,6 +146,7 @@ class Metric(BaseEnum):
     CollectionsLogged = "collections_logged"
     
     # Bosses
+    MadAngel = "mad_angel"
     AbyssalSire = "abyssal_sire"
     AlchemicalHydra = "alchemical_hydra"
     Amoxliatl = "amoxliatl"
@@ -349,6 +350,7 @@ Bosses: t.FrozenSet[Metric] = frozenset(
         Metric.Zalcano,
         Metric.Zulrah,
         Metric.Yama,
+        Metric.MadAngel,
     }
 )
 """Set containing bosses."""
