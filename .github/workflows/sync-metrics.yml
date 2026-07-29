@@ -1,15 +1,23 @@
 name: sync-metrics
 
 # Keep wom/enums.py current with the live Wise Old Man metric catalogue with no
-# human in the loop for the common case. Weekly (and on demand): diff our enum
-# against @wise-old-man/utils; if WOM added metrics, add them, run the tests,
-# and commit — automatically. The ONLY time a human is pinged is when the job
-# FAILS (source unreachable / format changed / tests broke) — GitHub emails the
-# repo watchers on a failed scheduled run.
+# human in the loop for the common case: diff our enum against
+# @wise-old-man/utils; if WOM added metrics, add them, run the tests, and commit
+# — automatically. The ONLY time a human is pinged is when the job FAILS
+# (source unreachable / format changed / tests broke) — GitHub emails the repo
+# watchers on a failed scheduled run.
+#
+# Cadence is weighted towards OSRS update days. Game updates ship on Wednesdays,
+# and WOM's own catalogue follows within hours, so Wed/Thu are checked hourly to
+# pick new bosses/skills up the same day; the rest of the week is every 12h,
+# which is plenty for a catalogue that otherwise rarely moves. A no-change run
+# makes zero commits and triggers nothing downstream, so the extra frequency
+# costs only CI minutes.
 
 on:
   schedule:
-    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+    - cron: "0 * * * 3,4" # hourly, Wednesdays + Thursdays (OSRS update days)
+    - cron: "0 0,12 * * 0,1,2,5,6" # every 12h, rest of the week
   workflow_dispatch: {}
 
 permissions:
