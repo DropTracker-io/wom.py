@@ -85,6 +85,28 @@ strings and DropTracker's `utils/wiseoldman.py` family-mapping (skill-vs-boss)
 doesn't recognize them until added. When you add a metric here, also mirror the
 boss/skill slug into the `_WOM_*_SLUGS` block in the app's `utils/wiseoldman.py`.
 
+### 3. Multi-metric competitions
+
+WOM competitions can measure several metrics at once (live on the WOM API since
+2026-10-07, server PR #2044). Upstream 1.0.0 only knew the single `metric`.
+
+- **Responses:** `Competition.metrics` is a list of `CompetitionMetric`
+  (`metric`, `weight`, `created_at`). `CompetitionParticipationDetail.deltas`
+  breaks a participant's progress down per metric, plus a `"total"` row; their
+  `progress` is the combined total. Use `Competition.metric_values` (falls back
+  to the legacy field) and `is_multi_metric` rather than reading `metric`.
+- **`Competition.metric` is optional now.** WOM deprecated it and plans to
+  remove it; a required field would then fail every competition decode. As a
+  side effect it moved to the end of the struct (keyword construction only).
+- **Requests:** `create_competition`, `edit_competition`, `search_competitions`,
+  `get_details`, `get_top_participant_history` and `get_details_csv` take
+  `metrics=[...]` (enum members or raw slugs). It wins over `metric`, which is
+  still sent as before when `metrics` is omitted. For a multi-metric create,
+  pass `None` as the positional `metric`. Weights can't be set through WOM's API.
+
+Regression tests: `tests/test_dt_multi_metric_competitions.py` (decodes a
+trimmed live response, the legacy shape, and a response without `metric`).
+
 ## Keeping the enum current — automated
 
 `tools/sync_metrics.py` diffs `wom/enums.py` against the authoritative

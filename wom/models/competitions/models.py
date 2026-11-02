@@ -37,6 +37,8 @@ __all__ = (
     "Competition",
     "CompetitionDetail",
     "CompetitionHistoryDataPoint",
+    "CompetitionMetric",
+    "CompetitionMetricDelta",
     "CompetitionParticipationDetail",
     "CompetitionParticipation",
     "CompetitionProgress",
@@ -62,6 +64,41 @@ class CompetitionProgress(BaseModel):
     """The amount of progress gained in the metric."""
 
 
+class CompetitionMetric(BaseModel):
+    """One metric measured by a competition.
+
+    DropTracker fork: WOM competitions can measure several metrics at once
+    (live on the WOM API since 2026-10-07). Single-metric competitions carry
+    a one-element list.
+    """
+
+    metric: enums.MetricValue
+    """The metric being measured."""
+
+    weight: float = 1.0
+    """How much a unit of this metric counts toward the combined progress."""
+
+    created_at: t.Optional[datetime] = None
+    """The date this metric was added to the competition."""
+
+
+class CompetitionMetricDelta(BaseModel):
+    """A participant's progress in one metric of a competition.
+
+    DropTracker fork: WOM sends one entry per competition metric plus a
+    ``"total"`` entry holding the combined progress.
+    """
+
+    metric: str
+    """The metric slug, or ``"total"`` for the combined row."""
+
+    values: CompetitionProgress
+    """The [`CompetitionProgress`][wom.CompetitionProgress] in this metric."""
+
+    levels: CompetitionProgress
+    """The progress in levels. Only meaningful for skill metrics."""
+
+
 class Competition(BaseModel):
     """Represents a competition."""
 
@@ -70,9 +107,6 @@ class Competition(BaseModel):
 
     title: str
     """The title of the competition."""
-
-    metric: enums.MetricValue
-    """The metric being measured."""
 
     type: CompetitionType
     """The [CompetitionType][wom.CompetitionType]."""
@@ -98,6 +132,19 @@ class Competition(BaseModel):
     participant_count: int
     """The number of players participating."""
 
+    metric: t.Optional[enums.MetricValue] = None
+    """The first metric being measured.
+
+    Deprecated by WOM in favour of `metrics`, and slated for removal there,
+    so it is optional here: a response without it must still decode. Use
+    [`metric_values`][wom.Competition.metric_values] instead.
+    """
+
+    metrics: t.List[CompetitionMetric] = []
+    """Every [`CompetitionMetric`][wom.CompetitionMetric] this competition
+    measures. Empty only on responses from before WOM added the field.
+    """
+
     group: t.Optional[Group] = None
     """The [`Group`][wom.Group] associated with the competition, if
     there is one.
@@ -107,6 +154,19 @@ class Competition(BaseModel):
     """A list containing the [`CompetitionParticipations`]
     [wom.CompetitionParticipation].
     """
+
+    @property
+    def metric_values(self) -> t.List[str]:
+        """Every metric slug this competition measures, in WOM's order,
+        falling back to the legacy single `metric` field."""
+        if self.metrics:
+            return [m.metric for m in self.metrics]
+        return [self.metric] if self.metric else []
+
+    @property
+    def is_multi_metric(self) -> bool:
+        """Whether this competition measures more than one metric."""
+        return len(self.metric_values) > 1
 
 
 class Participation(BaseModel):
@@ -173,6 +233,12 @@ class CompetitionParticipationDetail(CompetitionParticipation):
     """The [`CompetitionProgress`][wom.CompetitionProgress] as it relates to
     the number of levels gained. Only contains useful information for skilling
     competitions."""
+
+    deltas: t.List[CompetitionMetricDelta] = []
+    """Per-metric progress (DropTracker fork). For a multi-metric
+    competition, `progress` is the combined total and this list breaks it
+    down by metric, plus a ``"total"`` entry.
+    """
 
 
 class CompetitionDetail(Competition):

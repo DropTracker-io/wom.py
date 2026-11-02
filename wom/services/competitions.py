@@ -31,6 +31,31 @@ from wom import routes
 
 from . import BaseService
 
+MetricT = t.Union[enums.Metric, str]
+"""A metric as the enum member or its raw WOM slug (DropTracker fork: a slug
+lets callers use a metric WOM added before the enum learned it)."""
+
+
+def _metric_value(metric: MetricT) -> str:
+    return metric.value if isinstance(metric, enums.Metric) else str(metric)
+
+
+def _metric_values(metrics: t.Optional[t.Sequence[MetricT]]) -> t.Optional[t.List[str]]:
+    """De-duplicated slugs in caller order, or None when not given. A bare
+    string is one metric, not a sequence of characters."""
+    if metrics is None:
+        return None
+    if isinstance(metrics, (str, enums.Metric)):
+        metrics = [metrics]
+    out: t.List[str] = []
+    for metric in metrics:
+        value = _metric_value(metric)
+        if value not in out:
+            out.append(value)
+    if not out:
+        raise ValueError("metrics must name at least one metric")
+    return out
+
 __all__ = ("CompetitionService",)
 
 T = t.TypeVar("T")
@@ -42,6 +67,25 @@ class CompetitionService(BaseService):
 
     __slots__ = ()
 
+    @staticmethod
+    def _metric_params(
+        metric: t.Optional[MetricT],
+        metrics: t.Optional[t.Sequence[MetricT]],
+        *,
+        required: bool = False,
+    ) -> t.Dict[str, t.Any]:
+        """The ``metric``/``metrics`` request field. WOM deprecated the single
+        ``metric`` in favour of the ``metrics`` list; when ``metrics`` is given
+        it wins, otherwise the legacy single field is sent unchanged."""
+        values = _metric_values(metrics)
+        if values is not None:
+            return {"metrics": values}
+        if metric is not None:
+            return {"metric": _metric_value(metric)}
+        if required:
+            raise ValueError("Either metric or metrics is required")
+        return {}
+
     async def search_competitions(
         self,
         *,
@@ -51,6 +95,7 @@ class CompetitionService(BaseService):
         metric: t.Optional[enums.Metric] = None,
         limit: t.Optional[int] = None,
         offset: t.Optional[int] = None,
+        metrics: t.Optional[t.Sequence[MetricT]] = None,
     ) -> ResultT[t.List[models.Competition]]:
         """Searches for competitions with the given criteria.
 
@@ -65,13 +110,16 @@ class CompetitionService(BaseService):
                 [wom.CompetitionStatus] filter. Defaults to `None`.
 
             metric: The optional [`Metric`][wom.Metric] filter. Defaults
-                to `None`.
+                to `None`. Deprecated by WOM; prefer `metrics`.
 
             limit: The maximum number of paginated items to receive.
                 Defaults to `None` (I think thats 20 items?).
 
             offset: The page offset for requesting multiple pages.
                 Defaults to `None`.
+
+            metrics: The optional metrics filter (enum members or slugs).
+                Takes precedence over `metric`. Defaults to `None`.
 
         Returns:
             A [`Result`][wom.Result] containing the list of competitions
@@ -101,7 +149,7 @@ class CompetitionService(BaseService):
             offset=offset,
             type=type.value if type else None,
             status=status.value if status else None,
-            metric=metric.value if metric else None,
+            **self._metric_params(metric, metrics),
         )
 
         route = routes.SEARCH_COMPETITIONS.compile().with_params(params)
@@ -109,7 +157,11 @@ class CompetitionService(BaseService):
         return self._ok_or_err(data, t.List[models.Competition])
 
     async def get_details(
-        self, id: int, *, metric: t.Optional[enums.Metric] = None
+        self,
+        id: int,
+        *,
+        metric: t.Optional[MetricT] = None,
+        metrics: t.Optional[t.Sequence[MetricT]] = None,
     ) -> ResultT[models.CompetitionDetail]:
         """Gets details for the given competition.
 
@@ -120,6 +172,10 @@ class CompetitionService(BaseService):
             metric: The optional [`Metric`][wom.Metric] to view the
                 competition progress in. As if this competition was
                 actually for that metric. Defaults to `None`.
+
+            metrics: The optional metrics to view the progress in (enum
+                members or slugs), combined. Takes precedence over
+                `metric`. Defaults to `None`.
 
         Returns:
             A [`Result`][wom.Result] containing the competition details.
@@ -140,13 +196,17 @@ class CompetitionService(BaseService):
             )
             ```
         """
-        params = self._generate_map(metric=metric.value if metric else None)
+        params = self._metric_params(metric, metrics)
         route = routes.COMPETITION_DETAILS.compile(id).with_params(params)
         data = await self._http.fetch(route)
         return self._ok_or_err(data, models.CompetitionDetail)
 
     async def get_top_participant_history(
-        self, id: int, *, metric: t.Optional[enums.Metric] = None
+        self,
+        id: int,
+        *,
+        metric: t.Optional[MetricT] = None,
+        metrics: t.Optional[t.Sequence[MetricT]] = None,
     ) -> ResultT[t.List[models.Top5ProgressResult]]:
         """Gets details for the players with the top 5 progress in the
         competition.
@@ -158,6 +218,10 @@ class CompetitionService(BaseService):
             metric: The optional [`Metric`][wom.Metric] to view the
                 competition progress in. As if this competition was
                 actually for that metric. Defaults to `None`.
+
+            metrics: The optional metrics to view the progress in (enum
+                members or slugs), combined. Takes precedence over
+                `metric`. Defaults to `None`.
 
         Returns:
             A [`Result`][wom.Result] containing the list of top 5
@@ -177,7 +241,7 @@ class CompetitionService(BaseService):
             )
             ```
         """
-        params = self._generate_map(metric=metric.value if metric else None)
+        params = self._metric_params(metric, metrics)
         route = routes.TOP_PARTICIPANT_HISTORY.compile(id).with_params(params)
         data = await self._http.fetch(route)
         return self._ok_or_err(data, t.List[models.Top5ProgressResult])
@@ -185,7 +249,7 @@ class CompetitionService(BaseService):
     async def create_competition(
         self,
         title: str,
-        metric: enums.Metric,
+        metric: t.Optional[MetricT],
         starts_at: datetime,
         ends_at: datetime,
         *,
@@ -193,6 +257,7 @@ class CompetitionService(BaseService):
         group_verification_code: t.Optional[str] = None,
         teams: t.Optional[t.List[models.Team]] = None,
         participants: t.Optional[t.List[str]] = None,
+        metrics: t.Optional[t.Sequence[MetricT]] = None,
     ) -> ResultT[models.CreatedCompetitionDetail]:
         """Creates a new competition.
 
@@ -200,7 +265,7 @@ class CompetitionService(BaseService):
             title: The title of the competition.
 
             metric: The [`Metric`][wom.Metric] the competition should
-                measure.
+                measure. Pass `None` when giving `metrics` instead.
 
             starts_at: The start date for the competition.
 
@@ -220,9 +285,17 @@ class CompetitionService(BaseService):
             teams: The optional teams to include in the competition.
                 Defaults to `None`.
 
+            metrics: Every metric the competition should measure (enum
+                members or slugs). Takes precedence over `metric`; more
+                than one makes a multi-metric competition. Defaults to
+                `None`.
+
         Returns:
             A [`Result`][wom.Result] containing the newly created
                 competition detail.
+
+        Raises:
+            ValueError: Neither `metric` nor `metrics` was given.
 
         !!! info
 
@@ -267,8 +340,8 @@ class CompetitionService(BaseService):
             participants=participants,
             endsAt=ends_at.isoformat(),
             startsAt=starts_at.isoformat(),
-            metric=metric.value if metric else None,
             groupVerificationCode=group_verification_code,
+            **self._metric_params(metric, metrics, required=True),
         )
 
         route = routes.CREATE_COMPETITION.compile()
@@ -281,11 +354,12 @@ class CompetitionService(BaseService):
         verification_code: str,
         *,
         title: t.Optional[str] = None,
-        metric: t.Optional[enums.Metric] = None,
+        metric: t.Optional[MetricT] = None,
         starts_at: t.Optional[datetime] = None,
         ends_at: t.Optional[datetime] = None,
         teams: t.Optional[t.List[models.Team]] = None,
         participants: t.Optional[t.List[str]] = None,
+        metrics: t.Optional[t.Sequence[MetricT]] = None,
     ) -> ResultT[models.Competition]:
         """Edits an existing competition.
 
@@ -313,6 +387,10 @@ class CompetitionService(BaseService):
 
             teams: The optional list of teams to replace the existing
                 participants with. Defaults to `None`.
+
+            metrics: The optional new full list of metrics (enum members
+                or slugs). Replaces every existing metric and takes
+                precedence over `metric`. Defaults to `None`.
 
         Returns:
             A [`Result`][wom.Result] containing the edited competition
@@ -345,8 +423,8 @@ class CompetitionService(BaseService):
             participants=participants,
             startsAt=starts_at.isoformat() if starts_at else None,
             endsAt=ends_at.isoformat() if ends_at else None,
-            metric=metric.value if metric else None,
             verificationCode=verification_code,
+            **self._metric_params(metric, metrics),
         )
 
         route = routes.EDIT_COMPETITION.compile(id)
@@ -602,9 +680,10 @@ class CompetitionService(BaseService):
         self,
         id: int,
         *,
-        metric: t.Optional[enums.Metric] = None,
+        metric: t.Optional[MetricT] = None,
         team_name: t.Optional[str] = None,
         table_type: t.Optional[models.CompetitionCSVTableType] = None,
+        metrics: t.Optional[t.Sequence[MetricT]] = None,
     ) -> ResultT[str]:
         """Gets details about the competition in CSV format.
 
@@ -615,6 +694,10 @@ class CompetitionService(BaseService):
             metric: The optional [`Metric`][wom.Metric] to view the
                 competition progress in. As if this competition was
                 actually for that metric. Defaults to `None`.
+
+            metrics: The optional metrics to view the progress in (enum
+                members or slugs), combined. Takes precedence over
+                `metric`. Defaults to `None`.
 
             team_name: The optional team name you would like to get details
                 for. Defaults to `None`.
@@ -639,7 +722,9 @@ class CompetitionService(BaseService):
             )
             ```
         """
-        params = self._generate_map(metric=metric, teamName=team_name, table=table_type)
+        params = self._generate_map(
+            teamName=team_name, table=table_type, **self._metric_params(metric, metrics)
+        )
         route = routes.COMPETITION_DETAILS_CSV.compile(id).with_params(params)
         data = await self._http.fetch(route)
 
